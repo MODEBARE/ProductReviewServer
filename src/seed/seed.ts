@@ -4,37 +4,43 @@ import { Review } from '../models/Review';
 
 async function seed() {
   try {
-    await sequelize.sync({ force: true }); // Recreates the schema — use with caution
+    await sequelize.sync({ force: true });
 
-    // Step 1: Create products
+    const now = new Date();
+
     const products = await Product.bulkCreate([
       {
         name: 'MacBook Pro',
         description: 'Apple M1 chip, 16GB RAM, 512GB SSD',
         category: 'Electronics',
         price: 1499,
-        dateAdded: new Date(),
-        averageRating: 0 // temporary, will be updated
+        dateAdded: now,
+        averageRating: 0,
+        createdAt: now,
+        updatedAt: now
       },
       {
         name: 'Sony WH-1000XM5',
         description: 'Noise Cancelling Wireless Headphones',
         category: 'Audio',
         price: 399,
-        dateAdded: new Date(),
-        averageRating: 0
+        dateAdded: now,
+        averageRating: 0,
+        createdAt: now,
+        updatedAt: now
       },
       {
         name: 'Standing Desk',
         description: 'Ergonomic adjustable height desk',
         category: 'Furniture',
         price: 299,
-        dateAdded: new Date(),
-        averageRating: 0
+        dateAdded: now,
+        averageRating: 0,
+        createdAt: now,
+        updatedAt: now
       }
     ]);
 
-    // Step 2: Create reviews
     const reviewsData = [
       { productId: products[0].id, author: 'Elijah', rating: 5, comment: 'Fantastic performance!' },
       { productId: products[0].id, author: 'Peace', rating: 4, comment: 'Great battery life.' },
@@ -42,21 +48,26 @@ async function seed() {
       { productId: products[2].id, author: 'Sam', rating: 3, comment: 'Good but slightly wobbly.' }
     ];
 
-    await Review.bulkCreate(reviewsData);
+    await Review.bulkCreate(
+      reviewsData.map(r => ({
+        ...r,
+        date: now,
+        createdAt: now,
+        updatedAt: now
+      }))
+    );
 
-    // Step 3: Compute averageRating and update each product
+    // Recalculate average rating
     for (const product of products) {
       const productReviews = reviewsData.filter(r => r.productId === product.id);
-      const avg =
-        productReviews.reduce((sum, r) => sum + r.rating, 0) / productReviews.length;
-
+      const avg = productReviews.reduce((sum, r) => sum + r.rating, 0) / productReviews.length;
       await product.update({ averageRating: avg });
     }
 
-    console.log('✅ Seeding complete with average ratings.');
+    console.log('✅ Seed complete!');
     process.exit();
   } catch (error) {
-    console.error('❌ Seeding failed:', error);
+    console.error('❌ Seed failed:', error);
     process.exit(1);
   }
 }
